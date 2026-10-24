@@ -1,0 +1,60 @@
+# Safe Processes Configuration
+# Processes that should never be killed by auto-response
+# Even if they score Critical
+
+never_kill:
+  - "lsass.exe"
+  - "csrss.exe"
+  - "smss.exe"
+  - "wininit.exe"
+  - "services.exe"
+  - "svchost.exe"
+  - "winlogon.exe"
+  - "explorer.exe"
+  - "dwm.exe"
+  - "conhost.exe"
+  - "fontdrvhost.exe"
+  - "system"
+  - "registry"
+  - "memory compression"
+
+# Trusted paths - processes from these paths get score reduction
+trusted_paths:
+  - "C:\\Windows\\System32\\"
+  - "C:\\Windows\\SysWOW64\\"
+  - "C:\\Program Files\\"
+  - "C:\\Program Files (x86)\\"
+  - "C:\\Windows\\explorer.exe"
+  - "C:\\Windows\\SystemApps\\"
+  # Developer tool install paths — these spawn shells constantly
+  - "C:\\Program Files\\Microsoft VS Code\\"
+  - "C:\\Users\\AppData\\Local\\Programs\\Microsoft VS Code\\"
+  - "C:\\Program Files\\nodejs\\"
+  - "C:\\Program Files (x86)\\nodejs\\"
+  - "C:\\Program Files\\Git\\"
+  - "C:\\Program Files (x86)\\Git\\"
+  - "C:\\Python"
+  - "\\AppData\\Local\\Programs\\Python\\"
+  - "\\AppData\\Roaming\\npm\\"
+  - "C:\\Program Files\\JetBrains\\"
+
+# Suspicious paths - processes from these paths get score increase
+suspicious_paths:
+  - "C:\\Temp\\"
+  - "C:\\Windows\\Temp\\"
+  - "C:\\Users\\Public\\"
+  - "C:\\ProgramData\\"
+  - "\\AppData\\Local\\Temp\\"
+  - "\\AppData\\Roaming\\"
+  - "\\Downloads\\"
+
+# Never suppress signals
+# These behaviors always generate alerts even from trusted paths
+never_suppress_signals:
+  - "defender_disable"
+  - "shadow_copy_deletion"
+  - "mass_file_encryption"
+  - "credential_dumping"
+  - "office_spawned_encoded_powershell"
+  - "event_log_cleared"
+  - "ransomware_prep"

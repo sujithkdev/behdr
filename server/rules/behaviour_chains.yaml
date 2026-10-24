@@ -1,0 +1,700 @@
+# L1 Exact Behaviour Chain Rules — v2 (expanded coverage)
+# Covers: macro shells, credential dumping, ransomware prep, defense evasion,
+# privilege escalation (UAC bypass), lateral movement, persistence, exfiltration,
+# fileless malware, process injection indicators, reconnaissance tools.
+
+chains:
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION A — INITIAL ACCESS / PHISHING
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Office Spawns Shell"
+    description: "Office application spawning a command shell — macro/phishing"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 95
+    mitre: ["T1566.001", "T1059.001"]
+    pattern:
+      - parent: ["winword.exe","excel.exe","powerpnt.exe","outlook.exe","acrord32.exe",
+                 "onenote.exe","mspub.exe","visio.exe","msaccess.exe"]
+        child:  ["powershell.exe","pwsh.exe","cmd.exe","wscript.exe","cscript.exe","mshta.exe"]
+    never_suppress: true
+
+  - name: "Office Spawned Encoded PowerShell"
+    description: "Office app spawning encoded PowerShell — strongest macro indicator"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 97
+    mitre: ["T1566.001","T1059.001","T1027"]
+    pattern:
+      - parent: ["winword.exe","excel.exe","powerpnt.exe","outlook.exe"]
+        child:  ["powershell.exe","pwsh.exe"]
+        cmdline_contains: ["-enc","-encodedcommand"]
+    never_suppress: true
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION B — CREDENTIAL DUMPING
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Credential Dumping — Mimikatz/LSASS"
+    description: "Credential dumping tool or LSASS memory access"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 95
+    mitre: ["T1003.001"]
+    pattern:
+      - cmdline_contains: ["sekurlsa::logonpasswords","sekurlsa::wdigest",
+                           "lsadump::sam","lsadump::dcsync","lsadump::lsa"]
+      - cmdline_contains: ["comsvcs.dll","MiniDump"]
+      - child: ["procdump.exe","procdump64.exe"]
+        cmdline_contains: ["lsass"]
+      - child: ["rundll32.exe"]
+        cmdline_contains: ["comsvcs","minidump"]
+    never_suppress: true
+
+  - name: "SAM/NTDS Hive Dump"
+    description: "Registry hive extraction — offline credential theft"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 90
+    mitre: ["T1003.002","T1003.003"]
+    pattern:
+      - child: ["reg.exe"]
+        cmdline_contains: ["save hklm\\sam","save hklm\\system","save hklm\\security"]
+      - cmdline_contains: ["ntdsutil","ifm","create full"]
+    never_suppress: true
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION C — RANSOMWARE PREPARATION
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Shadow Copy Deletion"
+    description: "Shadow copy deletion — primary ransomware preparation"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 90
+    mitre: ["T1490"]
+    pattern:
+      - child: ["vssadmin.exe"]
+        cmdline_contains: ["delete shadows"]
+      - child: ["wbadmin.exe"]
+        cmdline_contains: ["delete"]
+      - child: ["bcdedit.exe"]
+        cmdline_contains: ["recoveryenabled"]
+      - child: ["wmic.exe"]
+        cmdline_contains: ["shadowcopy delete"]
+      - cmdline_contains: ["Get-WmiObject Win32_ShadowCopy","Remove-WmiObject"]
+    never_suppress: true
+
+  - name: "Password-Protected Archive — Exfiltration Prep"
+    description: "Archive created with password — likely exfiltration staging"
+    confidence: HIGH
+    severity: HIGH
+    score: 72
+    mitre: ["T1560.001","T1041"]
+    pattern:
+      - child: ["7z.exe","7za.exe","rar.exe","winrar.exe"]
+        cmdline_contains: [" -p"," -hp"]
+      - child: ["powershell.exe","pwsh.exe"]
+        cmdline_contains: ["Compress-Archive","ZipFile::CreateFromDirectory"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION D — DEFENSE EVASION
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Defender Disable"
+    description: "Windows Defender being disabled via PowerShell API"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 95
+    mitre: ["T1562.001"]
+    pattern:
+      - cmdline_contains: ["DisableRealtimeMonitoring","DisableBehaviorMonitoring",
+                           "DisableAntiSpyware","DisableAntivirus",
+                           "DisableIOAVProtection","DisableScriptScanning"]
+    never_suppress: true
+
+  - name: "Security Tool Stopped"
+    description: "Security service being stopped via sc or net stop"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 88
+    mitre: ["T1562.001"]
+    pattern:
+      - child: ["sc.exe"]
+        cmdline_contains: ["stop WinDefend","stop MsMpEng","stop Sense",
+                           "stop WdNisSvc","stop SecurityHealthService"]
+      - child: ["net.exe","net1.exe"]
+        cmdline_contains: ["stop windefend","stop mssense","stop wscsvc",
+                           "stop sharedaccess"]
+    never_suppress: true
+
+  - name: "AMSI Bypass Attempt"
+    description: "Script engine bypassing AMSI to evade AV scanning"
+    confidence: HIGH
+    severity: HIGH
+    score: 85
+    mitre: ["T1562.001"]
+    pattern:
+      - cmdline_contains: ["AmsiUtils","amsiInitFailed","AmsiScanBuffer",
+                           "amsi.dll","[Ref].Assembly.GetType",
+                           "System.Management.Automation.AmsiUtils"]
+
+  - name: "Event Log Cleared"
+    description: "Windows event log cleared to remove forensic evidence"
+    confidence: HIGH
+    severity: HIGH
+    score: 80
+    mitre: ["T1070.001"]
+    pattern:
+      - child: ["wevtutil.exe"]
+        cmdline_contains: ["cl Security","cl System","cl Application","clear-log"]
+      - cmdline_contains: ["Clear-EventLog","Limit-EventLog"]
+    never_suppress: true
+
+  - name: "Encoded PowerShell with Stealth Flags"
+    description: "Encoded PowerShell + hidden window or no-profile — obfuscated execution"
+    confidence: HIGH
+    severity: HIGH
+    score: 78
+    mitre: ["T1059.001","T1027"]
+    pattern:
+      - child: ["powershell.exe","pwsh.exe"]
+        cmdline_contains: ["-enc -nop","-encodedcommand -nop",
+                           "-enc -w hidden","-encodedcommand -windowstyle"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION E — PRIVILEGE ESCALATION — UAC BYPASS
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "UAC Bypass via fodhelper"
+    description: "fodhelper.exe spawning shell — known UAC bypass technique"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 90
+    mitre: ["T1548.002"]
+    pattern:
+      - parent: ["fodhelper.exe"]
+        child:  ["cmd.exe","powershell.exe","pwsh.exe"]
+
+  - name: "UAC Bypass via eventvwr"
+    description: "eventvwr.exe spawning shell — classic UAC bypass"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 90
+    mitre: ["T1548.002"]
+    pattern:
+      - parent: ["eventvwr.exe"]
+        child:  ["cmd.exe","powershell.exe","pwsh.exe"]
+
+  - name: "UAC Bypass via computerdefaults"
+    description: "computerdefaults.exe spawning shell — UAC bypass"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 90
+    mitre: ["T1548.002"]
+    pattern:
+      - parent: ["computerdefaults.exe"]
+        child:  ["cmd.exe","powershell.exe","pwsh.exe"]
+
+  - name: "UAC Bypass via sdclt"
+    description: "sdclt.exe spawning shell — UAC bypass via backup client"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 90
+    mitre: ["T1548.002"]
+    pattern:
+      - parent: ["sdclt.exe"]
+        child:  ["cmd.exe","powershell.exe","pwsh.exe"]
+
+  - name: "UAC Bypass via SilentCleanup"
+    description: "cleanmgr.exe / dismhost spawning elevated shell"
+    confidence: HIGH
+    severity: HIGH
+    score: 85
+    mitre: ["T1548.002"]
+    pattern:
+      - parent: ["cleanmgr.exe","dismhost.exe","dism.exe"]
+        child:  ["cmd.exe","powershell.exe"]
+        cmdline_contains: ["/c","bypass","-enc"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION F — LATERAL MOVEMENT
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Remote WMI Execution"
+    description: "WMI used for remote command execution on another host"
+    confidence: HIGH
+    severity: HIGH
+    score: 80
+    mitre: ["T1047"]
+    pattern:
+      - child: ["wmic.exe"]
+        cmdline_contains: ["/node:","process call create"]
+      - cmdline_contains: ["Invoke-WmiMethod","Get-WmiObject -ComputerName",
+                           "wmic /node"]
+
+  - name: "PowerShell Remoting"
+    description: "PowerShell remoting to a remote host — WinRM lateral movement"
+    confidence: HIGH
+    severity: HIGH
+    score: 78
+    mitre: ["T1021.006"]
+    pattern:
+      - cmdline_contains: ["Invoke-Command -ComputerName","Invoke-Command -Cn",
+                           "New-PSSession -ComputerName","Enter-PSSession -ComputerName",
+                           "-ComputerName -Credential"]
+
+  - name: "Net Use Remote Share"
+    description: "Mapping a remote network share — lateral movement preparation"
+    confidence: HIGH
+    severity: HIGH
+    score: 72
+    mitre: ["T1021.002"]
+    pattern:
+      - child: ["net.exe","net1.exe"]
+        cmdline_contains: ["use \\\\","use /"]
+
+  - name: "PsExec Remote Execution"
+    description: "PsExec or equivalent remote service execution"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 88
+    mitre: ["T1021.002","T1569.002"]
+    pattern:
+      - child: ["psexec.exe","psexec64.exe"]
+      - cmdline_contains: ["psexec \\\\","\\\\psexec"]
+      - child: ["cmd.exe","powershell.exe"]
+        cmdline_contains: ["\\\\","$ipc","\\admin$"]
+
+  - name: "Remote Service Creation"
+    description: "sc.exe creating a service on a remote host"
+    confidence: HIGH
+    severity: HIGH
+    score: 82
+    mitre: ["T1569.002"]
+    pattern:
+      - child: ["sc.exe"]
+        cmdline_contains: ["\\\\","create","binpath="]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION G — PERSISTENCE
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Registry Run Key Persistence"
+    description: "Registry Run/RunOnce key write — persistence mechanism"
+    confidence: HIGH
+    severity: HIGH
+    score: 75
+    mitre: ["T1547.001"]
+    pattern:
+      - child: ["reg.exe"]
+        cmdline_contains: ["CurrentVersion\\Run","CurrentVersion\\RunOnce",
+                           "CurrentVersion\\RunServices"]
+      - cmdline_contains: ["HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                           "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                           "New-ItemProperty.*Run"]
+
+  - name: "Scheduled Task Persistence"
+    description: "Scheduled task created — persistence or lateral execution"
+    confidence: MEDIUM
+    severity: MEDIUM
+    score: 65
+    mitre: ["T1053.005"]
+    pattern:
+      - child: ["schtasks.exe"]
+        cmdline_contains: ["/create /sc","/create /tn","/create /tr"]
+      - cmdline_contains: ["Register-ScheduledTask","New-ScheduledTaskAction"]
+
+  - name: "Service Persistence"
+    description: "New Windows service created — persistence mechanism"
+    confidence: MEDIUM
+    severity: MEDIUM
+    score: 65
+    mitre: ["T1543.003"]
+    pattern:
+      - child: ["sc.exe"]
+        cmdline_contains: ["create","binpath="]
+      - cmdline_contains: ["New-Service -Name","sc create"]
+
+  - name: "WMI Event Subscription Persistence"
+    description: "WMI permanent event subscription — fileless, survives reboot"
+    confidence: HIGH
+    severity: HIGH
+    score: 85
+    mitre: ["T1546.003"]
+    pattern:
+      - cmdline_contains: ["__EventFilter","__EventConsumer","__FilterToConsumerBinding",
+                           "ActiveScriptEventConsumer","CommandLineEventConsumer",
+                           "Set-WmiInstance -Class __EventFilter"]
+
+  - name: "Startup Folder Persistence"
+    description: "File dropped into Windows Startup folder"
+    confidence: HIGH
+    severity: HIGH
+    score: 75
+    mitre: ["T1547.001"]
+    pattern:
+      - cmdline_contains: ["\\Start Menu\\Programs\\Startup\\",
+                           "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION H — FILELESS / IN-MEMORY EXECUTION
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "LOLBin Payload Download"
+    description: "Living-off-the-land binary downloading a remote payload"
+    confidence: HIGH
+    severity: HIGH
+    score: 75
+    mitre: ["T1105"]
+    pattern:
+      - child: ["certutil.exe"]
+        cmdline_contains: ["-urlcache","-decode"]
+      - child: ["bitsadmin.exe"]
+        cmdline_contains: ["/transfer"]
+      - child: ["powershell.exe","pwsh.exe"]
+        cmdline_contains: ["DownloadString(","DownloadFile(","IEX(New-Object",
+                           "IEX (New-Object","Invoke-Expression (New-Object"]
+
+  - name: "Reflective Assembly Load"
+    description: "PowerShell loading .NET assembly directly into memory — fileless"
+    confidence: HIGH
+    severity: HIGH
+    score: 80
+    mitre: ["T1620","T1059.001"]
+    pattern:
+      - cmdline_contains: ["[System.Reflection.Assembly]::Load(",
+                           "[Reflection.Assembly]::Load(",
+                           "Add-Type -AssemblyName",
+                           "[System.Reflection.Assembly]::LoadWithPartialName",
+                           "[System.Reflection.Assembly]::LoadFrom"]
+
+  - name: "WMI Process Creation (Fileless)"
+    description: "wmic used to create a process locally — common fileless technique"
+    confidence: HIGH
+    severity: HIGH
+    score: 75
+    mitre: ["T1047","T1059"]
+    pattern:
+      - child: ["wmic.exe"]
+        cmdline_contains: ["process call create","process where name"]
+
+  - name: "IEX Download Cradle"
+    description: "Invoke-Expression download cradle — downloads and executes in memory"
+    confidence: HIGH
+    severity: HIGH
+    score: 82
+    mitre: ["T1059.001","T1105"]
+    pattern:
+      - cmdline_contains: ["IEX(","IEX (","iex(new-object",
+                           "Invoke-Expression(","invoke-expression (new-object",
+                           "iex([System.Text.Encoding]"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION I — PROCESS INJECTION INDICATORS
+  # (requires Sysmon Event 8/10; these cover cmdline-visible indicators)
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Process Injection via mavinject"
+    description: "mavinject.exe used to inject DLL into a running process"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 92
+    mitre: ["T1055.001"]
+    pattern:
+      - child: ["mavinject.exe","mavinject32.exe"]
+      - cmdline_contains: ["mavinject","/injectrunning"]
+
+  - name: "Suspicious rundll32 Execution"
+    description: "rundll32 executing a remote or unusual DLL — injection/LOLBin"
+    confidence: HIGH
+    severity: HIGH
+    score: 75
+    mitre: ["T1218.011","T1055"]
+    pattern:
+      - child: ["rundll32.exe"]
+        cmdline_contains: ["javascript:","vbscript:","shell32.dll,ShellExec_RunDLL",
+                           "comsvcs.dll","pcwutl.dll","zipfldr.dll,RouteTheCall"]
+
+  - name: "Process Hollowing Indicators"
+    description: "Common process hollowing tools and cmdline patterns"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 90
+    mitre: ["T1055.012"]
+    pattern:
+      - cmdline_contains: ["VirtualAllocEx","WriteProcessMemory",
+                           "CreateRemoteThread","NtUnmapViewOfSection",
+                           "ZwUnmapViewOfSection"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION J — RECONNAISSANCE
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Active Directory Enumeration"
+    description: "AD/domain enumeration — pre-lateral movement recon"
+    confidence: HIGH
+    severity: HIGH
+    score: 70
+    mitre: ["T1069.002","T1087.002","T1482"]
+    pattern:
+      - cmdline_contains: ["Get-ADUser","Get-ADComputer","Get-ADGroup",
+                           "Get-ADDomain","Get-ADForest",
+                           "net group /domain","net user /domain",
+                           "nltest /domain_trusts","nltest /dclist"]
+      - child: ["nltest.exe"]
+        cmdline_contains: ["/domain","/dclist","/trusted_domains"]
+
+  - name: "Network Scanning"
+    description: "Network port/host scanner launched from endpoint"
+    confidence: HIGH
+    severity: HIGH
+    score: 78
+    mitre: ["T1046"]
+    pattern:
+      - child: ["nmap.exe","masscan.exe","zmap.exe","angryip.exe"]
+      - cmdline_contains: ["Test-NetConnection -Port","portscan","port scan",
+                           "nmap -sV","nmap -sS","nmap -p"]
+
+  - name: "Credential Phishing Recon"
+    description: "Stored credential enumeration — recon before credential theft"
+    confidence: MEDIUM
+    severity: MEDIUM
+    score: 62
+    mitre: ["T1555.004"]
+    pattern:
+      - child: ["cmdkey.exe"]
+        cmdline_contains: ["/list"]
+      - cmdline_contains: ["Get-StoredCredential","CredEnumerate"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION K — EXFILTRATION
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Data Exfiltration via DNS"
+    description: "Suspicious DNS query pattern — possible DNS tunneling exfiltration"
+    confidence: MEDIUM
+    severity: HIGH
+    score: 72
+    mitre: ["T1048.003"]
+    pattern:
+      - child: ["nslookup.exe"]
+        cmdline_contains: ["-type=txt","-querytype=txt"]
+      - cmdline_contains: ["Resolve-DnsName -Type TXT","dnscat","iodine"]
+
+  - name: "Exfiltration via Cloud Storage"
+    description: "Data upload to cloud storage — exfiltration via web service"
+    confidence: MEDIUM
+    severity: MEDIUM
+    score: 65
+    mitre: ["T1567.002"]
+    pattern:
+      - cmdline_contains: ["rclone copy","rclone sync","rclone move",
+                           "mega-put","megaput","gdrive upload",
+                           "aws s3 cp","aws s3 sync"]
+
+  - name: "FTP Exfiltration"
+    description: "FTP client used for potential data exfiltration"
+    confidence: MEDIUM
+    severity: MEDIUM
+    score: 62
+    mitre: ["T1048.003"]
+    pattern:
+      - child: ["ftp.exe"]
+        cmdline_contains: ["-s:","put","mput"]
+      - cmdline_contains: ["(New-Object Net.FtpWebRequest)"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION L — REGISTRY MODIFICATION (T1112)
+  # Covers broad registry writes outside the known-persistence Run key
+  # paths already handled by Section G.  These target security-relevant
+  # registry keys that attackers modify to weaken defences or achieve
+  # stealthy persistence through less-watched locations.
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Registry Security Policy Modification"
+    description: "Attacker weakening security policies via registry — defence evasion"
+    confidence: HIGH
+    severity: HIGH
+    score: 78
+    mitre: ["T1112"]
+    pattern:
+      - child: ["reg.exe"]
+        cmdline_contains: ["add HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender",
+                           "add HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa",
+                           "add HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options"]
+      - cmdline_contains: ["Set-ItemProperty.*HKLM.*Policies.*Windows Defender",
+                           "Set-ItemProperty.*HKLM.*Lsa",
+                           "New-ItemProperty.*Image File Execution Options"]
+
+  - name: "Registry UAC Bypass Modification"
+    description: "Registry key modification to disable UAC prompts — privilege escalation"
+    confidence: HIGH
+    severity: HIGH
+    score: 80
+    mitre: ["T1112", "T1548.002"]
+    pattern:
+      - child: ["reg.exe"]
+        cmdline_contains: ["ConsentPromptBehaviorAdmin",
+                           "EnableLUA",
+                           "PromptOnSecureDesktop"]
+      - cmdline_contains: ["Set-ItemProperty.*ConsentPromptBehaviorAdmin",
+                           "Set-ItemProperty.*EnableLUA"]
+
+  - name: "Registry Debugger Hijack (Image File Execution Options)"
+    description: "IFEO debugger key set — used to hijack process launch for persistence"
+    confidence: HIGH
+    severity: HIGH
+    score: 82
+    mitre: ["T1112", "T1546.012"]
+    pattern:
+      - cmdline_contains: ["Image File Execution Options",
+                           "IFEO",
+                           "Debugger"]
+      - child: ["reg.exe"]
+        cmdline_contains: ["/v Debugger"]
+
+  - name: "Registry AutoRun Modification (Beyond Run Keys)"
+    description: "Autorun registry key write outside standard Run paths"
+    confidence: MEDIUM
+    severity: MEDIUM
+    score: 65
+    mitre: ["T1112", "T1547"]
+    pattern:
+      - child: ["reg.exe"]
+        cmdline_contains: ["AppInit_DLLs",
+                           "Winlogon\\Shell",
+                           "Winlogon\\Userinit",
+                           "BootExecute",
+                           "SessionManager\\SubSystems"]
+      - cmdline_contains: ["Set-ItemProperty.*AppInit_DLLs",
+                           "Set-ItemProperty.*Winlogon.*Shell",
+                           "Set-ItemProperty.*Winlogon.*Userinit"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION M — BITS JOB ABUSE (T1197)
+  # Background Intelligent Transfer Service is a signed Windows binary
+  # that can download files silently and persist jobs across reboots.
+  # Often overlooked compared to certutil/bitsadmin /transfer.
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "BITS Job Download Abuse"
+    description: "bitsadmin or PowerShell BITS cmdlet used to download a remote file"
+    confidence: HIGH
+    severity: HIGH
+    score: 72
+    mitre: ["T1197", "T1105"]
+    pattern:
+      - child: ["bitsadmin.exe"]
+        cmdline_contains: ["/addfile", "/resume", "/create", "/SetNotifyCmdLine"]
+      - cmdline_contains: ["Start-BitsTransfer",
+                           "Add-BitsFile",
+                           "New-BitsTransfer",
+                           "Import-Module BitsTransfer"]
+
+  - name: "BITS Persistence via Notify Command"
+    description: "BITS job with notify command — survives reboot, used for persistence"
+    confidence: HIGH
+    severity: HIGH
+    score: 80
+    mitre: ["T1197"]
+    pattern:
+      - child: ["bitsadmin.exe"]
+        cmdline_contains: ["/SetNotifyCmdLine",
+                           "/SetNotifyFlags"]
+      - cmdline_contains: ["Complete-BitsTransfer.*-Notification",
+                           "SetNotifyCmdLine"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION N — FILE PERMISSION MODIFICATION (T1222)
+  # Attackers modify file or directory ACLs to allow execution
+  # of dropped payloads or to prevent remediation tools from
+  # deleting malicious files.
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "File Permission Modification via icacls/cacls"
+    description: "icacls or cacls granting broad permissions — payload staging or anti-remediation"
+    confidence: MEDIUM
+    severity: MEDIUM
+    score: 60
+    mitre: ["T1222.001"]
+    pattern:
+      - child: ["icacls.exe"]
+        cmdline_contains: ["/grant Everyone", "/grant *S-1-1-0",
+                           "/grant Administrators:F", "/inheritance:r"]
+      - child: ["cacls.exe"]
+        cmdline_contains: ["/e /g Everyone:F", "/g Everyone:F"]
+      - cmdline_contains: ["Set-Acl", "GetAccessControl", "SetAccessControl"]
+
+  - name: "Hidden Attribute Set on File"
+    description: "attrib used to hide a file — staging or payload concealment"
+    confidence: MEDIUM
+    severity: MEDIUM
+    score: 55
+    mitre: ["T1222.001", "T1564.001"]
+    pattern:
+      - child: ["attrib.exe"]
+        cmdline_contains: ["+h ", "+s ", "+h +s", "+s +h"]
+      - cmdline_contains: ["Set-ItemProperty.*Attributes.*Hidden",
+                           "(Get-Item.*).Attributes = 'Hidden'",
+                           "attrib +h"]
+
+  - name: "takeown / Ownership Seizure"
+    description: "takeown.exe taking ownership of system file — likely replacing a system binary"
+    confidence: HIGH
+    severity: HIGH
+    score: 75
+    mitre: ["T1222.001"]
+    pattern:
+      - child: ["takeown.exe"]
+        cmdline_contains: ["/f C:\\Windows\\", "/f %SystemRoot%"]
+      - cmdline_contains: ["takeown /f"]
+
+  # ══════════════════════════════════════════════════════════════
+  # SECTION O — VALID ACCOUNTS / RUNAS ABUSE (T1078)
+  # Attackers use runas or credential-passing techniques to pivot
+  # into a higher-privileged account without triggering a logon
+  # event visible in the process tree.
+  # ══════════════════════════════════════════════════════════════
+
+  - name: "Suspicious runas Execution"
+    description: "runas used to launch a process as Administrator from an unexpected parent"
+    confidence: MEDIUM
+    severity: MEDIUM
+    score: 60
+    mitre: ["T1078"]
+    pattern:
+      - child: ["runas.exe"]
+        cmdline_contains: ["/user:Administrator", "/user:admin",
+                           "/user:SYSTEM", "/savecred"]
+      - cmdline_contains: ["runas /user:Administrator",
+                           "runas /savecred",
+                           "Start-Process.*-Verb RunAs",
+                           "Start-Process.*-Credential"]
+
+  - name: "runas with Saved Credentials"
+    description: "runas /savecred — reuses stored credentials silently, bypasses password prompt"
+    confidence: HIGH
+    severity: HIGH
+    score: 78
+    mitre: ["T1078", "T1555"]
+    pattern:
+      - child: ["runas.exe"]
+        cmdline_contains: ["/savecred"]
+      - cmdline_contains: ["runas /savecred",
+                           "runas.exe /savecred"]
+
+  - name: "net use with Explicit Credentials"
+    description: "net use passing explicit username/password — lateral movement credential reuse"
+    confidence: HIGH
+    severity: HIGH
+    score: 75
+    mitre: ["T1078", "T1021.002"]
+    pattern:
+      - child: ["net.exe", "net1.exe"]
+        cmdline_contains: ["/user:", "\\\\"]
+      - cmdline_contains: ["net use \\\\ /user:",
+                           "New-SmbMapping.*Credential",
+                           "New-PSDrive.*-Credential"]

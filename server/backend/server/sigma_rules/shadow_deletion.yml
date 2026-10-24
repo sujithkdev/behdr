@@ -1,0 +1,24 @@
+title: Vssadmin Shadow Copy Deletion Request
+id: 3ff940c7-a4ea-444c-a739-991accc78891
+status: experimental
+description: Detects an explicit recovery-copy deletion command, not proof of ransomware.
+author: BehEDR project
+license: MIT
+references:
+  - https://attack.mitre.org/techniques/T1490/
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\vssadmin.exe'
+    CommandLine|contains|all:
+      - delete
+      - shadows
+  condition: selection
+falsepositives:
+  - Authorized administrator recovery maintenance
+level: high
+tags:
+  - attack.impact
+  - attack.t1490

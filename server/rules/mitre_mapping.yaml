@@ -1,0 +1,332 @@
+# L4 MITRE ATT&CK Mapping
+# All fired signals are mapped to MITRE technique IDs.
+# Command intent classifier assigns human-readable labels.
+
+techniques:
+  T1059:
+    name: "Command and Scripting Interpreter"
+    description: "Adversaries may abuse command and script interpreters"
+    severity: HIGH
+    score_boost: 10
+    
+  T1059.001:
+    name: "PowerShell"
+    description: "Adversaries may abuse PowerShell commands and scripts"
+    severity: HIGH
+    score_boost: 15
+    
+  T1059.003:
+    name: "Windows Command Shell"
+    description: "Adversaries may abuse cmd.exe"
+    severity: MEDIUM
+    score_boost: 10
+    
+  T1547:
+    name: "Boot or Logon Autostart Execution"
+    description: "Adversaries may configure system settings to automatically execute"
+    severity: HIGH
+    score_boost: 20
+    
+  T1547.001:
+    name: "Registry Run Keys / Startup Folder"
+    description: "Adversaries may achieve persistence by adding a program to a startup folder"
+    severity: HIGH
+    score_boost: 20
+    
+  T1003:
+    name: "OS Credential Dumping"
+    description: "Adversaries may attempt to dump credentials"
+    severity: CRITICAL
+    score_boost: 30
+    
+  T1003.001:
+    name: "LSASS Memory"
+    description: "Adversaries may attempt to access credential material stored in LSASS"
+    severity: CRITICAL
+    score_boost: 30
+    
+  T1490:
+    name: "Inhibit System Recovery"
+    description: "Adversaries may delete or remove built-in data and turn off services"
+    severity: CRITICAL
+    score_boost: 30
+    
+  T1070:
+    name: "Indicator Removal"
+    description: "Adversaries may delete or alter generated artifacts"
+    severity: HIGH
+    score_boost: 20
+    
+  T1070.001:
+    name: "Clear Windows Event Logs"
+    description: "Adversaries may clear Windows Event Logs to hide activity"
+    severity: HIGH
+    score_boost: 20
+    
+  T1053:
+    name: "Scheduled Task/Job"
+    description: "Adversaries may abuse task scheduling functionality"
+    severity: HIGH
+    score_boost: 15
+    
+  T1053.005:
+    name: "Scheduled Task"
+    description: "Adversaries may abuse Windows Task Scheduler"
+    severity: HIGH
+    score_boost: 15
+    
+  T1543:
+    name: "Create or Modify System Process"
+    description: "Adversaries may create or modify system-level processes"
+    severity: HIGH
+    score_boost: 15
+    
+  T1543.003:
+    name: "Windows Service"
+    description: "Adversaries may create or modify Windows services"
+    severity: HIGH
+    score_boost: 15
+    
+  T1562:
+    name: "Impair Defenses"
+    description: "Adversaries may maliciously modify components to impair defenses"
+    severity: CRITICAL
+    score_boost: 25
+    
+  T1562.001:
+    name: "Disable or Modify Tools"
+    description: "Adversaries may modify and/or disable security tools"
+    severity: CRITICAL
+    score_boost: 25
+    
+  T1105:
+    name: "Ingress Tool Transfer"
+    description: "Adversaries may transfer tools or files from external systems"
+    severity: HIGH
+    score_boost: 15
+    
+  T1027:
+    name: "Obfuscated Files or Information"
+    description: "Adversaries may attempt to make payloads difficult to discover"
+    severity: HIGH
+    score_boost: 15
+    
+  T1566:
+    name: "Phishing"
+    description: "Adversaries may send phishing messages to gain access"
+    severity: HIGH
+    score_boost: 20
+    
+  T1566.001:
+    name: "Spearphishing Attachment"
+    description: "Adversaries may send spearphishing emails with malicious attachments"
+    severity: HIGH
+    score_boost: 20
+    
+  T1189:
+    name: "Drive-by Compromise"
+    description: "Adversaries may gain access through visiting a website"
+    severity: HIGH
+    score_boost: 20
+    
+  T1055:
+    name: "Process Injection"
+    description: "Adversaries may inject code into processes"
+    severity: HIGH
+    score_boost: 20
+    
+  T1218:
+    name: "System Binary Proxy Execution"
+    description: "Adversaries may bypass process and/or signature-based defenses"
+    severity: HIGH
+    score_boost: 15
+    
+  T1218.005:
+    name: "Mshta"
+    description: "Adversaries may abuse mshta.exe to proxy execution"
+    severity: HIGH
+    score_boost: 15
+    
+  T1218.010:
+    name: "Regsvr32"
+    description: "Adversaries may abuse Regsvr32.exe to proxy execution"
+    severity: HIGH
+    score_boost: 15
+    
+  T1218.011:
+    name: "Rundll32"
+    description: "Adversaries may abuse rundll32.exe to proxy execution"
+    severity: HIGH
+    score_boost: 15
+    
+  T1486:
+    name: "Data Encrypted for Impact"
+    description: "Adversaries may encrypt data on target systems"
+    severity: CRITICAL
+    score_boost: 30
+
+  T1112:
+    name: "Modify Registry"
+    description: "Adversaries may interact with the Windows Registry to hide configuration information"
+    severity: HIGH
+    score_boost: 15
+
+  T1197:
+    name: "BITS Jobs"
+    description: "Adversaries may abuse BITS to download, execute, and even clean up after malicious activity"
+    severity: HIGH
+    score_boost: 15
+
+  T1222:
+    name: "File and Directory Permissions Modification"
+    description: "Adversaries may modify file or directory permissions/attributes to evade defenses"
+    severity: MEDIUM
+    score_boost: 10
+
+  T1222.001:
+    name: "Windows File and Directory Permissions Modification"
+    description: "Adversaries may modify Windows file or directory permissions to evade defenses or stage a payload"
+    severity: MEDIUM
+    score_boost: 10
+
+  T1078:
+    name: "Valid Accounts"
+    description: "Adversaries may obtain and abuse credentials of existing accounts"
+    severity: HIGH
+    score_boost: 20
+
+  T1546.012:
+    name: "Image File Execution Options Injection"
+    description: "Adversaries may hijack execution flow via Image File Execution Options debugger key"
+    severity: HIGH
+    score_boost: 20
+
+  T1564.001:
+    name: "Hidden Files and Directories"
+    description: "Adversaries may set files and directories to be hidden to evade detection"
+    severity: MEDIUM
+    score_boost: 10
+
+# Command intent classifier
+# Keyword-scoring classifier that runs on all PowerShell/CMD/WScript processes
+# Assigns human-readable intent labels
+
+intent_classifier:
+  thresholds:
+    normal_admin: 0
+    suspicious_activity: 25
+    reconnaissance: 40
+    lateral_movement: 60
+    credential_access: 75
+    ransomware_activity: 85
+    critical_malware: 90
+  
+  keywords:
+    # Normal admin (0-10 points each)
+    normal:
+      - pattern: "Get-Process"
+        score: 5
+      - pattern: "Get-Service"
+        score: 5
+      - pattern: "Test-Connection"
+        score: 5
+    
+    # Reconnaissance (15-25 points each)
+    reconnaissance:
+      - pattern: "whoami"
+        score: 15
+      - pattern: "net user"
+        score: 20
+      - pattern: "net group"
+        score: 20
+      - pattern: "nltest"
+        score: 25
+      - pattern: "systeminfo"
+        score: 15
+      - pattern: "ipconfig /all"
+        score: 15
+      - pattern: "arp -a"
+        score: 20
+      - pattern: "net view"
+        score: 20
+      - pattern: "net share"
+        score: 20
+    
+    # Suspicious execution (25-40 points each)
+    suspicious_execution:
+      - pattern: "IEX"
+        score: 35
+      - pattern: "Invoke-Expression"
+        score: 35
+      - pattern: "-enc"
+        score: 30
+      - pattern: "-EncodedCommand"
+        score: 30
+      - pattern: "bypass"
+        score: 25
+      - pattern: "-noprofile"
+        score: 20
+      - pattern: "-windowstyle hidden"
+        score: 30
+    
+    # Lateral movement (40-60 points each)
+    lateral_movement:
+      - pattern: "psexec"
+        score: 50
+      - pattern: "wmic"
+        score: 40
+      - pattern: "Invoke-Command"
+        score: 45
+      - pattern: "Enter-PSSession"
+        score: 45
+      - pattern: "New-PSSession"
+        score: 45
+      - pattern: "winrm"
+        score: 40
+      - pattern: "net use"
+        score: 35
+    
+    # Credential access (60-80 points each)
+    credential_access:
+      - pattern: "mimikatz"
+        score: 80
+      - pattern: "sekurlsa"
+        score: 80
+      - pattern: "logonpasswords"
+        score: 80
+      - pattern: "procdump"
+        score: 70
+      - pattern: "lsass"
+        score: 75
+      - pattern: "comsvcs.dll"
+        score: 70
+      - pattern: "MiniDump"
+        score: 70
+    
+    # Ransomware activity (70-90 points each)
+    ransomware_activity:
+      - pattern: "vssadmin delete"
+        score: 85
+      - pattern: "wbadmin delete"
+        score: 85
+      - pattern: "bcdedit"
+        score: 80
+      - pattern: "shadowcopy delete"
+        score: 85
+      - pattern: "recoveryenabled no"
+        score: 85
+      - pattern: "cipher /w"
+        score: 75
+    
+    # Critical malware (80-100 points each)
+    critical_malware:
+      - pattern: "DisableRealtimeMonitoring"
+        score: 90
+      - pattern: "DisableAntivirus"
+        score: 90
+      - pattern: "Set-MpPreference -DisableRealtimeMonitoring"
+        score: 95
+      - pattern: "Clear-EventLog"
+        score: 85
+      - pattern: "wevtutil cl"
+        score: 85

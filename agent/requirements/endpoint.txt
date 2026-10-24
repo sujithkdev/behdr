@@ -1,0 +1,4 @@
+psutil==7.2.2
+requests==2.34.2
+pywin32>=311; sys_platform == "win32"
+# Optional memory scanner: install yara-python separately after lab validation.

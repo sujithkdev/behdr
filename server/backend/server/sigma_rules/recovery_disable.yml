@@ -1,0 +1,25 @@
+title: Bcdedit Recovery Disabled
+id: b073bdc8-e989-4543-9ef0-d1ac66597603
+status: experimental
+description: Detects a recovery configuration change request; authorization requires investigation.
+author: BehEDR project
+license: MIT
+references:
+  - https://attack.mitre.org/techniques/T1490/
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\bcdedit.exe'
+    CommandLine|contains|all:
+      - /set
+      - recoveryenabled
+      - 'no'
+  condition: selection
+falsepositives:
+  - Authorized boot configuration maintenance
+level: high
+tags:
+  - attack.impact
+  - attack.t1490

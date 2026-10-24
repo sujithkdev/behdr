@@ -1,0 +1,21 @@
+{
+  "package": "agent",
+  "files": {
+    ".gitignore": "ffa96010b3f1fad5d5c532e9f328e2799f42413f3e183487e1c001cba300d00b",
+    "deploy/sysmon-lab.xml": "201f033cbac2344dd61b25028e5dbd95ac9d1e86b8f8e93f0d3135193ac8712d",
+    "docs/phase3-sysmon.md": "0da52106581c751722ed8f70dc2b748dadb9fcacaea21148986b965ee9ac143c",
+    "endpoint/agent.py": "807651314d2f1e20ebca8b0a1bcd8f07247aae721d73898a05096c907ca4ad4f",
+    "endpoint/agent_service.py": "3c558d01080f1b042e30dd89689385bdb8473fd1908703f7d5e3b1a43ce42112",
+    "endpoint/etw_consumer.py": "1fd12d12d03365dc942c870dfc23cb926dc34f01b22d524f6e89f5d9a8fd2355",
+    "endpoint/eventlog.py": "1b647e49175b6b83ecfddc479a2222da94582c369078cd55c05b8fc76f4f162a",
+    "endpoint/process_context.py": "ffaa26f6755f72f38ab467f201870ac9faf8ec21a790da3f6d3cfb59dd7e1987",
+    "endpoint/response.py": "b26a24695bf5beac16c899407518dc6f1d5b6d038596ffa6c55db9ccde630dba",
+    "endpoint/spool.py": "af92da09a9259f19de22c0d57e95e5c03d1aef7917a5b048f1927f6cb5ead28d",
+    "endpoint/sysmon_collector.py": "830b2913c2a444007e0537ead34da039ec196578937e3f316c0ec61e359e2c19",
+    "endpoint/yara_scanner.py": "0ef5348e6c42cc46c64a80b0ae7d70181b3935c632adb4490551fab8a9db6340",
+    "README.md": "1c021ce0d6511870e65ba3c76c3b84e13ca2b42a03b349fe6b2fed5e1f394fe4",
+    "requirements/endpoint.txt": "214fe3e1c950e142da24826a7482966e2160f17b21e64879e2e9c5f98d10c479",
+    "rules/yara/README.md": "f105399d4043efcdc79e58c3abbd952f0efd51d3d6f06690f81e85c78119a6be",
+    "tools/phase6_guest_collect.ps1": "3d49ab58b48dfc9694f5bbaba818e5be9e0bd4e73297fbfea52c1df488c72454"
+  }
+}

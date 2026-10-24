@@ -1,0 +1,13 @@
+<!-- Lab-only capture profile. Validate with the installed Sysmon version.
+     File coverage is deliberately limited; this is not a production ruleset. -->
+<Sysmon schemaversion="4.82">
+  <HashAlgorithms>sha256</HashAlgorithms>
+  <EventFiltering>
+    <ProcessCreate onmatch="exclude" />
+    <NetworkConnect onmatch="exclude" />
+    <FileCreate onmatch="include">
+      <TargetFilename condition="begin with">C:\BehEDRLab\</TargetFilename>
+    </FileCreate>
+    <DnsQuery onmatch="exclude" />
+  </EventFiltering>
+</Sysmon>

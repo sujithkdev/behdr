@@ -1,0 +1,14 @@
+{
+  "window_seconds": 120,
+  "minimum_events": 5,
+  "high_modifications": 20,
+  "mass_modifications": 50,
+  "minimum_extension_files": 5,
+  "high_score": 60,
+  "mass_score": 90,
+  "extension_score": 85,
+  "note_bonus": 20,
+  "note_keywords": ["readme", "decrypt", "ransom", "recovery", "how_to", "restore"],
+  "note_extensions": [".txt", ".html", ".hta"],
+  "suspicious_extensions": [".encrypted", ".locked", ".crypto", ".crypt", ".enc"]
+}

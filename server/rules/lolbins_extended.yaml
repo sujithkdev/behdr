@@ -1,0 +1,199 @@
+# rules/lolbins_extended.yaml — Extended LOLBin detection rules
+# Source: LOLBAS Project (lolbas-project.github.io)
+# These cover LOLBins not handled by the main behaviour_chains.yaml
+
+chains:
+
+  # ── msiexec remote payload ──────────────────────────────────────────────
+  - name: "MSIExec Remote Payload Download"
+    description: "msiexec loading a remote MSI — fileless payload delivery"
+    confidence: HIGH
+    severity: HIGH
+    score: 80
+    mitre: ["T1218.007"]
+    pattern:
+      - child: ["msiexec.exe"]
+        cmdline_contains: ["/i http", "/i ftp", "/q http", "/quiet http",
+                           "msiexec.exe /i \\\\"]
+
+  # ── WSL/bash bypass ──────────────────────────────────────────────────────
+  - name: "WSL Execution Bypass"
+    description: "Windows Subsystem for Linux used to execute Linux binaries — bypass AV"
+    confidence: HIGH
+    severity: HIGH
+    score: 75
+    mitre: ["T1202"]
+    pattern:
+      - child: ["wsl.exe", "bash.exe"]
+        cmdline_contains: ["curl ", "wget ", "python", "python3",
+                           "nc ", "ncat", "chmod +x", "/bin/sh", "/bin/bash",
+                           "base64 -d", "eval"]
+
+  # ── hh.exe CHM payload ───────────────────────────────────────────────────
+  - name: "CHM Help File Execution"
+    description: "hh.exe executing a CHM — classic payload delivery vector"
+    confidence: HIGH
+    severity: HIGH
+    score: 78
+    mitre: ["T1218.001"]
+    pattern:
+      - child: ["hh.exe"]
+        cmdline_contains: ["http://", "https://", "\\\\", ".chm"]
+
+  # ── installutil bypass ───────────────────────────────────────────────────
+  - name: "InstallUtil AppLocker Bypass"
+    description: "installutil.exe executing .NET payload — AppLocker bypass"
+    confidence: HIGH
+    severity: HIGH
+    score: 82
+    mitre: ["T1218.004"]
+    pattern:
+      - child: ["installutil.exe"]
+        cmdline_contains: ["/logfile=", "/logtoconsole=", ".exe",
+                           "/u ", "logfile"]
+
+  # ── cmstp INF script ─────────────────────────────────────────────────────
+  - name: "CMSTP INF Script Execution"
+    description: "cmstp.exe executing INF file — UAC bypass + code execution"
+    confidence: HIGH
+    severity: HIGH
+    score: 85
+    mitre: ["T1218.003"]
+    pattern:
+      - child: ["cmstp.exe"]
+        cmdline_contains: ["/s", "/ns", ".inf"]
+
+  # ── forfiles child process ───────────────────────────────────────────────
+  - name: "Forfiles Proxy Execution"
+    description: "forfiles.exe spawning a command — used to bypass application whitelisting"
+    confidence: HIGH
+    severity: HIGH
+    score: 75
+    mitre: ["T1218"]
+    pattern:
+      - child: ["forfiles.exe"]
+        cmdline_contains: ["/c cmd", "/c powershell", "/p c:\\windows",
+                           "/m *.exe", "/c \"cmd"]
+
+  # ── msbuild inline C# ────────────────────────────────────────────────────
+  - name: "MSBuild Inline C# Execution"
+    description: "msbuild.exe executing inline C# — AppLocker bypass"
+    confidence: HIGH
+    severity: HIGH
+    score: 82
+    mitre: ["T1127.001"]
+    pattern:
+      - child: ["msbuild.exe"]
+        cmdline_contains: [".xml", ".csproj", ".proj", "http://", "https://",
+                           "\\\\"]
+
+  # ── syncappvpublishingserver PS bypass ───────────────────────────────────
+  - name: "PowerShell Bypass via SyncAppV"
+    description: "SyncAppvPublishingServer executing PowerShell without powershell.exe"
+    confidence: HIGH
+    severity: HIGH
+    score: 85
+    mitre: ["T1218"]
+    pattern:
+      - child: ["syncappvpublishingserver.exe", "appsyncpublishingserver.exe"]
+
+  # ── diskshadow EXEC command ──────────────────────────────────────────────
+  - name: "Diskshadow Script Execution"
+    description: "diskshadow.exe EXEC command — scripts commands including process creation"
+    confidence: HIGH
+    severity: HIGH
+    score: 80
+    mitre: ["T1218"]
+    pattern:
+      - child: ["diskshadow.exe"]
+        cmdline_contains: ["exec ", "/s ", "script"]
+
+  # ── esentutl SAM copy ────────────────────────────────────────────────────
+  - name: "Esentutl SAM/NTDS Copy"
+    description: "esentutl copying locked database files — offline credential access"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 88
+    mitre: ["T1003.002"]
+    pattern:
+      - child: ["esentutl.exe"]
+        cmdline_contains: ["/y", "sam", "ntds", "system", "security"]
+
+  # ── wsreset UAC bypass ───────────────────────────────────────────────────
+  - name: "WSReset UAC Bypass"
+    description: "wsreset.exe spawning elevated shell — UAC bypass technique"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 90
+    mitre: ["T1548.002"]
+    pattern:
+      - parent: ["wsreset.exe"]
+        child:  ["cmd.exe", "powershell.exe", "pwsh.exe"]
+
+  # ── desktopimgdownldr file download ─────────────────────────────────────
+  - name: "DesktopImgDownldr Payload Download"
+    description: "desktopimgdownldr.exe downloading a file — payload delivery"
+    confidence: HIGH
+    severity: HIGH
+    score: 78
+    mitre: ["T1105"]
+    pattern:
+      - child: ["desktopimgdownldr.exe"]
+        cmdline_contains: ["/lockscreenurl:http", "lockscreenurl:", "http://",
+                           "https://"]
+
+  # ── certreq file download ────────────────────────────────────────────────
+  - name: "Certreq File Download"
+    description: "certreq.exe used to download a file — LOLBin file transfer"
+    confidence: HIGH
+    severity: HIGH
+    score: 72
+    mitre: ["T1105"]
+    pattern:
+      - child: ["certreq.exe"]
+        cmdline_contains: ["-post", "-config", "http://", "https://"]
+
+  # ── ntdsutil IFM dump ────────────────────────────────────────────────────
+  - name: "Ntdsutil IFM Credential Dump"
+    description: "ntdsutil creating Install From Media — extracts AD credential database"
+    confidence: HIGH
+    severity: CRITICAL
+    score: 92
+    mitre: ["T1003.003"]
+    pattern:
+      - child: ["ntdsutil.exe"]
+        cmdline_contains: ["ifm", "create full", "create sysvol full"]
+    never_suppress: true
+
+  # ── control.exe DLL execution ────────────────────────────────────────────
+  - name: "Control Panel DLL Execution"
+    description: "control.exe executing a DLL directly — proxy DLL execution"
+    confidence: HIGH
+    severity: HIGH
+    score: 75
+    mitre: ["T1218.002"]
+    pattern:
+      - child: ["control.exe"]
+        cmdline_contains: [".dll", "\\\\", "appdata", "temp"]
+
+  # ── regasm/regsvcs execution ─────────────────────────────────────────────
+  - name: "Regasm/Regsvcs COM Execution"
+    description: "regasm or regsvcs executing a .NET assembly — AppLocker bypass"
+    confidence: HIGH
+    severity: HIGH
+    score: 80
+    mitre: ["T1218.009"]
+    pattern:
+      - child: ["regasm.exe", "regsvcs.exe"]
+        cmdline_contains: [".dll", ".exe", "\\\\", "http"]
+
+  # ── pcalua proxy execution ───────────────────────────────────────────────
+  - name: "PcaLua Proxy Execution"
+    description: "pcalua.exe executing a binary as a different application"
+    confidence: HIGH
+    severity: HIGH
+    score: 78
+    mitre: ["T1218"]
+    pattern:
+      - child: ["pcalua.exe"]
+        cmdline_contains: ["-a ", "-c "]
