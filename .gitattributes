@@ -1,0 +1,2 @@
+# Preserve packaged bytes so MANIFEST.json hashes match on Windows and Linux.
+* -text
